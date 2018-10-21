@@ -102,3 +102,13 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+
+# data
+*.h5
+*.dat
+*.pdf
+*.mean
+*.log
+*.json
