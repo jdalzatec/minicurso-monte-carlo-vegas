@@ -125,7 +125,7 @@ import h5py
 Ahora, cargamos el archivo HDF5 donde están los resultados obnetidos por **vegas**. Supongamos que el archivo se llama *length_10_sim_1_.h5*, entonces:
 
 ```python
-dataset = h5py.File(file, mode="r")
+dataset = h5py.File("length_10_sim_1_.h5", mode="r")
 ```
 
 La variable *dataset* ahora contiene toda la información. Podemos obtener algunos parámetros desde el diccionario de atributos:
