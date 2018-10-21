@@ -11,17 +11,17 @@ def main(file):
     mcs = dataset.attrs["mcs"]
     kb = dataset.attrs["mcs"]
     tau = mcs // 2
-    mag = numpy.abs(dataset.get("magnetization_z")[:, tau:])
 
+    mag = numpy.abs(dataset.get("magnetization_z")[:, tau:])
     energy = dataset.get("energy")[:, tau:]
     temperature = dataset.get("temperature")[:]
-    N = len(dataset.get("types"))
+    N = len(dataset.get("positions"))
     dataset.close()
 
-    mean_energy = numpy.mean(energy, axis=1) / N
-    specific_heat = numpy.std(energy, axis=1) ** 2 / (N * kb * temperature**2)
+    mean_energy = numpy.mean(energy, axis=1)
+    specific_heat = numpy.std(energy, axis=1) ** 2 / (kb * temperature**2)
     mean_magnetization = numpy.mean(mag, axis=1) / N
-    susceptibility = numpy.std(mag, axis=1) ** 2 / (N * kb * temperature)
+    susceptibility = numpy.std(mag, axis=1) ** 2 / (kb * temperature)
     V1 = numpy.mean(energy, axis=1) - numpy.mean(mag**1 * energy, axis=1) / numpy.mean(mag**1, axis=1)
     V2 = numpy.mean(energy, axis=1) - numpy.mean(mag**2 * energy, axis=1) / numpy.mean(mag**2, axis=1)
     

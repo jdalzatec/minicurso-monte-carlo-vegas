@@ -107,8 +107,135 @@ Basándonos en este [artículo](doi.org/10.1016/j.susc.2008.10.037), estas canti
 
 <img src="https://latex.codecogs.com/png.latex?$$C_{v}&space;=&space;\frac{1}{k_B&space;T^2}&space;\left(&space;\left<E^2\right>&space;-&space;\left<E\right>^2&space;\right)$$" title="$$C_{v} = \frac{1}{k_B T^2} \left( \left<E^2\right> - \left<E\right>^2 \right)$$" />
 
-<img src="https://latex.codecogs.com/png.latex?$$M&space;=&space;\left|\sum_i&space;\sigma_i&space;\right&space;|&space;$$" title="$$M = \left|\sum_i \sigma_i \right | $$" />
+<img src="https://latex.codecogs.com/png.latex?$$M&space;=&space;\frac{1}{N}\left|\sum_i&space;\sigma_i&space;\right&space;|&space;$$" title="$$M = \frac{1}{N}\left|\sum_i \sigma_i \right | $$" />
 
 <img src="https://latex.codecogs.com/png.latex?$$\chi&space;=&space;\frac{1}{k_B&space;T}&space;\left(&space;\left<M^2\right>&space;-&space;\left<M\right>^2&space;\right)$$" title="$$\chi = \frac{1}{k_B T} \left( \left<M^2\right> - \left<M\right>^2 \right)$$" />
 
 <img src="https://latex.codecogs.com/png.latex?$$V_{n}&space;=&space;\left<E\right>&space;-&space;\frac{\left<M^n&space;E\right>}{\left<M^n\right>}$$" title="$$V_{n} = \left<E\right> - \frac{\left<M^n E\right>}{\left<M^n\right>}$$" />
+
+Primero que todo, debemo importar algunas librerías para graficación, manejo de arreglos numéricos y manejo de archivos HDF5
+
+```python
+from matplotlib import pyplot
+from matplotlib.backends.backend_pdf import PdfPages
+import numpy
+import h5py
+```
+
+Ahora, cargamos el archivo HDF5 donde están los resultados obnetidos por **vegas**. Supongamos que el archivo se llama *length_10_sim_1_.h5*, entonces:
+
+```python
+dataset = h5py.File(file, mode="r")
+```
+
+La variable *dataset* ahora contiene toda la información. Podemos obtener algunos parámetros desde el diccionario de atributos:
+
+```python
+mcs = dataset.attrs["mcs"]
+kb = dataset.attrs["mcs"]
+```
+
+y definimos la variable **tau** como la mitad de los pasos Monte Carlo con el fin de despreciar los primeros **tau** pasos Monte Carlo para relajación:
+
+```python
+tau = mcs // 2
+```
+
+Además, podemos obtener la evolución de la magnetización y la energía. En este caso, vamos a cargar la magentización en z puesto que es un modelo de Ising con una política de actualización tipo *flip*:
+
+```python
+mag = numpy.abs(dataset.get("magnetization_z")[:, tau:])
+energy = dataset.get("energy")[:, tau:]
+```
+
+Así mismo, cargamos el arreglo de temperaturas:
+
+```python
+temperature = dataset.get("temperature")[:]
+```
+También podemos calcular al número de iones como la longitud del arreglo de posiciones:
+
+```python
+N = len(dataset.get("positions"))
+```
+
+Con todo esto cargado, podemos cerrar el **dataset** puesto que no necesitamos cargar más datos:
+
+```python
+dataset.close()
+```
+
+Empleando la definición de las variables arriba mencionadas, calculamos los observables:
+
+```python
+mean_energy = numpy.mean(energy, axis=1)
+specific_heat = numpy.std(energy, axis=1) ** 2 / (kb * temperature**2)
+mean_magnetization = numpy.mean(mag, axis=1) / N
+susceptibility = numpy.std(mag, axis=1) ** 2 / (kb * temperature)
+V1 = numpy.mean(energy, axis=1) - numpy.mean(mag**1 * energy, axis=1) / numpy.mean(mag**1, axis=1)
+V2 = numpy.mean(energy, axis=1) - numpy.mean(mag**2 * energy, axis=1) / numpy.mean(mag**2, axis=1)
+
+```
+
+Podemos realizar gráficas de los observables calculados:
+
+```python
+pdf = PdfPages(file.replace(".h5", ".pdf"))
+
+fig = pyplot.figure()
+ax = fig.add_subplot(111)
+ax2 = ax.twinx()
+ax.plot(temperature, mean_energy, "-s", color="black")
+ax2.plot(temperature, specific_heat, "-o", color="crimson")
+ax.grid()
+ax.set_xlabel(r"$T$", fontsize=20)
+ax.set_ylabel(r"$E$", fontsize=20, color="black")
+ax2.set_ylabel(r"$C_{v}$", fontsize=20, color="crimson")
+pyplot.tight_layout()
+pyplot.savefig(pdf, format="pdf")
+pyplot.close()
+
+fig = pyplot.figure()
+ax = fig.add_subplot(111)
+ax2 = ax.twinx()
+ax.plot(temperature, mean_magnetization, "-s", color="black")
+ax2.plot(temperature, susceptibility, "-o", color="crimson")
+ax.grid()
+ax.set_xlabel(r"$T$", fontsize=20)
+ax.set_ylabel(r"$M$", fontsize=20, color="black")
+ax2.set_ylabel(r"$\chi$", fontsize=20, color="crimson")
+pyplot.tight_layout()
+pyplot.savefig(pdf, format="pdf")
+pyplot.close()
+
+fig = pyplot.figure()
+ax = fig.add_subplot(111)
+ax2 = ax.twinx()
+ax.plot(temperature, V1, "-s", color="black")
+ax2.plot(temperature, V2, "-o", color="crimson")
+ax.grid()
+ax.set_xlabel(r"$T$", fontsize=20)
+ax.set_ylabel(r"$V_1$", fontsize=20, color="black")
+ax2.set_ylabel(r"$V_2$", fontsize=20, color="crimson")
+pyplot.tight_layout()
+pyplot.savefig(pdf, format="pdf")
+pyplot.close()
+
+pdf.close()
+```
+
+Y finalmente, guardamos los observables en un archivo, tal que puedan ser analizados posteriormente y aplicarles las leyes de escalamiento:
+
+```python
+with open(file.replace(".h5", ".mean"), mode="w") as file_results:
+    file_results.write("# T E Cv M Chi\n")
+    for i, _ in enumerate(temperature):
+        file_results.write("{} {} {} {} {} {} {}\n".format(
+            temperature[i], mean_energy[i], specific_heat[i],
+            mean_magnetization[i], susceptibility[i], V1[i], V2[i]
+            ))
+
+print("File %s was analyzed !!!" % file)
+```
+
+## Aplicando leyes de escalamiento (scaling.py)
