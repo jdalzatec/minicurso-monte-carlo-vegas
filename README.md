@@ -9,4 +9,3 @@ El contenido del minicurso es:
 - Aspectos generales de Vegas: Paquete de Software para la simulación atomística de materiales magnéticos.
 - Cálculo de exponentes críticos mediante leyes de escalamiento.
 - Cálculo de propiedades histeréticas.
-- Simulación del efecto magneto calórico mediante simulaciones Monte Carlo.

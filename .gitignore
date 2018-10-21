@@ -112,3 +112,5 @@ venv.bak/
 *.mean
 *.log
 *.json
+
+!slides.pdf
