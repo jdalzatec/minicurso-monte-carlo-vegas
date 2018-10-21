@@ -1,5 +1,7 @@
 # Ciclos de histéresis para nanopartículas core/shell
 
+## Construcción de la nanopartícula core/shell (build_sample.py)
+
 Vamos a construir una nanopartícula core/shell con estructura cúbica simple usando un script de python.
 
 Primero que todo, debemos incluir las librerías necesarias:
@@ -13,7 +15,7 @@ from collections import defaultdict
 
 Ahora, definimos los valores del radio del core <img src="https://latex.codecogs.com/gif.latex?\left&space;(&space;R_c\right)" title="\left ( R_c\right)" /> y de la nanopartícula <img src="https://latex.codecogs.com/gif.latex?\left&space;(&space;R\right)" title="\left ( R\right)" /> medidos en celdas unitarias.
 
-```
+```python
 Rc = 7.5
 R = 10.5
 ```
@@ -53,7 +55,6 @@ jex = {
     ("shell", "core"): jint,
     ("shell", "shell"): jss
       }
-
 ```
 
 Ahora, creamos la lista de sitios y los identificamos como iones del core o del shell de acuerdo a <img src="https://latex.codecogs.com/gif.latex?R_c" title="R_c" />:
@@ -72,7 +73,6 @@ for site in product(range(-int(numpy.ceil(R+1)), int(numpy.ceil(R+1))),
             core_sites.append(site)
         else:
             shell_sites.append(site)
-
 ```
 
 Convertimos las listas anteriores a arreglos de ```numpy``` para producir un corte transversal para <img src="https://latex.codecogs.com/gif.latex?y&space;=&space;0" title="y = 0" />:
@@ -98,7 +98,6 @@ pyplot.xlim(-R-1, R+1)
 pyplot.ylim(-R-1, R+1)
 pyplot.gca().set_aspect("equal")
 pyplot.show()
-
 ```
 ![cross-section](https://pcm-ca.github.io/vegas/tutorials/system-building/building-a-core-shell-nanoparticle/output_16_0.png)
 
@@ -124,7 +123,6 @@ for site in sites:
     for nhb in nhbs[site]:
         assert numpy.linalg.norm(numpy.array(site) - numpy.array(nhb)) == 1.0
         assert site in nhbs[nhb]
-
 ```
 
 Ahora, creamos un diccionario para identifica el tipo de cada sitio, el cual puede ser ```core```, ```shell```, ```core_interface``` o ```shell_interface```, los cuales corresponde a los sitios localizados en el core, el shell, la interfaz del core y la interfaz del shell, respectivamente:
@@ -139,7 +137,6 @@ for site in sites:
             prefix += "_interface"
             break
     types[site] = prefix
-
 ```
 
 Creamos un diccionario para almacenas todos los sitios de cada tipo:
@@ -153,7 +150,7 @@ for site in sites:
 Verificamos que sólo hay cuatro tipo de iones:
 
 ```python
-positions.keys()
+print(positions.keys())
 ```
 
 ```python
@@ -188,7 +185,6 @@ pyplot.xlim(-R-1, R+1)
 pyplot.ylim(-R-1, R+1)
 pyplot.gca().set_aspect("equal")
 pyplot.show()
-
 ```
 
 ![cross-section](https://pcm-ca.github.io/vegas/tutorials/system-building/building-a-core-shell-nanoparticle/output_30_0.png)
@@ -273,3 +269,206 @@ Cerramos los archivos:
 sample_file.close()
 anisotropy_file.close()
 ```
+
+## Archivo de configuración (config.py)
+
+Para hacer una simulación para el estudio de propiedades histeréticas de este tipo de sistemas, es necesario enfriar inicialmente la muestra en presencia de un campo magnético y luego hacer el ciclo de histéresis. **vegas** permite pasar listas para las propiedades *field* y *temperature*. Con esto en mente, vamos a hacer un script de python para generar el archivo ```config.json```. Inicialmente, generamos un arreglo de temperaturas (**temps**) y campos (**fields**). Luego, generamos los valores para el enfriamiento:
+
+
+```python
+import numpy
+
+temps = []
+fields = []
+for T in numpy.linspace(1.0, 0.001, 100):
+    temps.append(T)
+    fields.append(1.0)
+```
+
+Ahora, creamos los valores para el ciclo de histéresis:
+
+```python
+for H in numpy.linspace(1, -1, 100, endpoint=False):
+    fields.append(H)
+    temps.append(temps[-1])
+
+for H in numpy.linspace(-1, 1, 101):
+    fields.append(H)
+    temps.append(temps[-1])
+```
+
+Finalmente, creamos un diccionario con los parámetros:
+
+```python
+params = {
+    "sample": "sample.dat",
+    "anisotropy": "anisotropy.dat",
+    "out": "results.h5",
+    "kb": 1.0,
+    "mcs": 10000,
+    "seed": 696969,
+    "field": fields,
+    "temperature": temps
+}
+```
+
+y almacenamos el diccionarios **params** en un archivo json:
+
+```python
+import json
+json.dump(params, open("config.json", mode="w"))
+```
+
+## Ejecutando **vegas**
+
+Ahora, ejecutamos desde la consola vegas:
+
+```bash
+vegas config.json
+```
+
+Un mensaje como este debe aparecer:
+
+![console-vegas](image.png)
+
+Una vez la simulación esté completa, el archivo **results.h5** es generado. Este archivo contiene toda la historia de la simulación.
+
+## Análisis de resultados (analyzer.py)
+
+Importamos las librerías requeridas:
+
+```python
+import numpy
+import h5py
+from matplotlib import pyplot
+from collections import Counter
+```
+
+Cargamos la el archivo de resultados (**results.h5**) dentro de una estructura llamada **dataset**:
+
+```python
+dataset = h5py.File("results.h5", mode="r")
+```
+
+Si *casteamos* **dataset** a una lista, será devuelto el conjunto de variables:
+
+```python
+print(list(dataset))
+```
+
+```
+['core_interface_x', 'core_interface_y', 'core_interface_z', 'core_x', 'core_y', 'core_z', 'energy', 'field', 'finalstates', 'magnetization_x', 'magnetization_y', 'magnetization_z', 'positions', 'shell_interface_x', 'shell_interface_y', 'shell_interface_z', 'shell_x', 'shell_y', 'shell_z', 'temperature', 'types']
+```
+
+Además, podemos obtener el número de pasos Monte Carlo (**mcs**) usando el diccionario de atributos.
+
+```python
+mcs = dataset.attrs.get("mcs")
+```
+
+Cargamos los tipos de iones para cada sitio y los contamos. Esto con el fin de calcular la magnetización por tipo:
+
+```python
+types = [t.decode() for t in dataset.get("types")]
+num_types = Counter(types)
+```
+
+Imprimimos el diccionario **num_types** para observar el número de iones por tipo:
+
+```python
+print(num_types)
+```
+
+```python
+Counter({'shell': 2524, 'core': 1261, 'shell_interface': 630, 'core_interface': 530})
+```
+
+Cargamos los arreglos de temperaturas y campos. Sin embargo, podemos despreciar los primeros 100 puntos, debido a que estos son los puntos del enfriamiento:
+
+```python
+temperatures = dataset.get("temperature")[100:]
+fields = dataset.get("field")[100:]
+```
+
+Además, cargamos la magnetización total en z junto con la magnetización en z para cada tipo de iones. Esto es posible por medio de la variable ```type_z``` donde ```type``` es el tipo. Es decir, ```dataset.get("core_z")``` es la magnetización de los iones con tipo ```core``` en la dirección z.
+
+```python
+mag_z = dataset.get("magnetization_z")[100:, mcs//2:]
+mag_z_by_type = {t: dataset.get("%s_z" % t)[100:, mcs//2:] for t in num_types}
+```
+
+Es posible aprecias en las lineas anteriores que despreciamos los primeros 100 puntos de campo/temperatura debido a que son los pasos del enfriamiento (no importantes acá) y la mitad de los pasos Monte Carlo para la relajación.
+
+Computamos los promedios de las magnetizaciones cada 10 pasos Monte Carlo:
+
+```python
+mag_mean = numpy.mean(mag_z[:, ::10], axis=1) / numpy.sum(list(num_types.values()))
+mag_mean_by_type = {t:  numpy.mean(
+    mag_z_by_type[t][:, ::10], axis=1) / num_types[t] for t in num_types}
+```
+
+Graficamos la magnetización media por tipo como función del campo magnético.
+
+```python
+pyplot.figure(figsize=(8, 6))
+pyplot.plot(fields, mag_mean, label=r"$M_{\rm total}$", lw=2)
+for t, mag in mag_mean_by_type.items():
+    pyplot.plot(fields, mag, label=r"$M_{\rm %s}$" % t.replace("_", "\ "), lw=2)
+
+pyplot.xlabel(r"$H / J_{cc}$", fontsize=20)
+pyplot.ylabel(r"$M$", fontsize=20)
+pyplot.xlim(min(fields), max(fields))
+pyplot.grid()
+lgd1 = pyplot.legend(loc=9, fontsize=20,
+              bbox_to_anchor=(0.0, 0.35, 1, 1), ncol=2, mode="expand")
+pyplot.savefig("M_vs_H.png", bbox_extra_artists=(lgd1, ), bbox_inches='tight')
+pyplot.close()
+```
+
+![hysteresis](M_vs_H.png)
+
+
+Computamos los interceptos con el eje del campo para calcular el campo coercitivo y el campo bias. Estos interceptos son calculados como el punto medio entre los puntos donde la magnetización cambia de signo. Estos interceptos no están centrados en <img src="https://latex.codecogs.com/gif.latex?H&space;=&space;0" title="H = 0" />, indicanto que la ocurrencia de *exchange bias*:
+
+```python
+intercepts = list()
+for i in range(len(fields) - 1):
+    if numpy.sign(mag_mean[i]) != numpy.sign(mag_mean[i + 1]):
+        intercepts.append((fields[i] + fields[i + 1]) * 0.5)
+print(intercepts)
+```
+
+```
+[-0.25, -0.03]
+```
+
+Calculamos el campo bias (**Hb**) y el campo coercitivo (**Hc**):
+
+```python
+Hb = (intercepts[0] + intercepts[1]) * 0.5
+Hc = numpy.abs(intercepts[0] - intercepts[1]) * 0.5
+print(Hc, Hb)
+```
+
+```
+0.11 -0.14
+```
+
+Finalmente, graficamos los ciclos de histéresis para la magnetización total indicando los valores ```Hb```, ```Hb + Hc``` y ```Hb - Hc```:
+
+```python
+pyplot.figure(figsize=(8, 6))
+pyplot.plot(fields, mag_mean, label=r"$M_{\rm total}$", lw=2)
+pyplot.axvline(Hb, color="crimson", lw=2, label=r"$H_{B}$")
+pyplot.axvline(Hb - Hc, color="black", lw=2, label=r"$H_{B} - H_{C}$")
+pyplot.axvline(Hb + Hc, color="orange", lw=2, label=r"$H_{B} + H_{C}$")
+pyplot.xlabel(r"$H / J_{cc}$", fontsize=20)
+pyplot.ylabel(r"$M$", fontsize=20)
+pyplot.xlim(min(fields), max(fields))
+pyplot.grid()
+pyplot.legend(loc=4, fontsize=20)
+pyplot.savefig("M_vs_H_lines.png")
+pyplot.close()
+```
+
+![hysteresis](M_vs_H_lines.png)
