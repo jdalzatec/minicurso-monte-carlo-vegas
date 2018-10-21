@@ -24,7 +24,6 @@ def main(num_simulations):
             with open(json_filename, mode="w") as json_file:
                 json.dump(parameters, json_file)
 
-
                 print("time vegas %s > %s" % (json_filename, json_filename.replace(".json", ".log")))
     
 
