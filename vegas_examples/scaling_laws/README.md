@@ -224,6 +224,8 @@ pyplot.close()
 pdf.close()
 ```
 
+![results](image.png)
+
 Y finalmente, guardamos los observables en un archivo, tal que puedan ser analizados posteriormente y aplicarles las leyes de escalamiento:
 
 ```python
