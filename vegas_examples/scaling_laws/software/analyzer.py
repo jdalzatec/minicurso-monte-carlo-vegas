@@ -5,8 +5,7 @@ import h5py
 import click
 
 @click.command()
-# @click.argument("file")
-@click.option("--file", default="length_10_sim_1_.h5")
+@click.argument("file")
 def main(file):
     dataset = h5py.File(file, mode="r")
     mcs = dataset.attrs["mcs"]

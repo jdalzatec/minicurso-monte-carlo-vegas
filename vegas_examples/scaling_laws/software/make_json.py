@@ -14,7 +14,7 @@ def main(num_simulations):
             parameters = dict(
                 sample=sample,
                 seed=numpy.random.randint(10000, 1000000),
-                temperature=dict(start=5.0, final=0.01, points=200),
+                temperature=dict(start=3.0, final=2.0, points=100),
                 mcs=10000,
                 out=sample.replace(".dat", "sim_%i_.h5" % (i + 1)),
                 kb=1.0

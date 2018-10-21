@@ -4,7 +4,7 @@ import itertools
 import click
 
 @click.command()
-@click.option("--length", "-l", default=100, help="Length of the system.")
+@click.option("--length", "-l", default=50, help="Length of the system.")
 @click.option("--jex", default=1.0, help="Exchange constant.")
 def main(length, jex):
     N = length * length

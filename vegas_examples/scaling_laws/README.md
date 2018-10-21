@@ -92,3 +92,20 @@ for sample in samples:
             print("time vegas %s > %s" % (json_filename, json_filename.replace(".json", ".log")))
 ```
 
+## Creación de script para analizar los resultados (analyzer.py)
+
+Vamos a crear un script para analizar los resultados y obtener las cantidad estadísticas de interés:
+- $\left<E\right>$: Energía media.
+- $C_{v}$: Calor específico.
+- $M$: Magnetización media.
+- $\chi$: Susceptibilidad magnética.
+- $V_{1}$: Cumulante de orden 1 del parámetro de orden.
+- $V_{2}$: Cumulante de orden 2 del parámetro de orden.
+
+Basándonos en este [artículo](doi.org/10.1016/j.susc.2008.10.037), estas cantidades son definidas como:
+
+$$\left<E\right> = \left< \mathcal{H} \right>$$
+$$C_{v} = \frac{1}{k_B T^2} \left( \left<E^2\right> - \left<E\right>^2 \right)$$
+$$M = \left|\sum{i} \sigma_i \right |
+$$\chi = \frac{1}{k_B T} \left( \left<M^2\right> - \left<M\right>^2 \right)$$
+$$Vn = \left<E\right> - \frac{\left<M^n E\right>}{\left<M^n\right>}$$
