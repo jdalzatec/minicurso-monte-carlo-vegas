@@ -95,17 +95,20 @@ for sample in samples:
 ## Creación de script para analizar los resultados (analyzer.py)
 
 Vamos a crear un script para analizar los resultados y obtener las cantidad estadísticas de interés:
-- $\left<E\right>$: Energía media.
-- $C_{v}$: Calor específico.
-- $M$: Magnetización media.
-- $\chi$: Susceptibilidad magnética.
-- $V_{1}$: Cumulante de orden 1 del parámetro de orden.
-- $V_{2}$: Cumulante de orden 2 del parámetro de orden.
+- <img src="https://latex.codecogs.com/png.latex?$\left<E\right>$" title="$\left<E\right>$" />: Energía media.
+- <img src="https://latex.codecogs.com/png.latex?$C_{v}$" title="$C_{v}$" />: Calor específico.
+- <img src="https://latex.codecogs.com/png.latex?$M$" title="$M$" />: Magnetización media.
+- <img src="https://latex.codecogs.com/png.latex?$\chi$" title="$\chi$" />: Susceptibilidad magnética.
+- <img src="https://latex.codecogs.com/png.latex?$V_{n}$" title="$V_{n}$" />: Cumulante de orden n del parámetro de orden.
 
 Basándonos en este [artículo](doi.org/10.1016/j.susc.2008.10.037), estas cantidades son definidas como:
 
-$$\left<E\right> = \left< \mathcal{H} \right>$$
-$$C_{v} = \frac{1}{k_B T^2} \left( \left<E^2\right> - \left<E\right>^2 \right)$$
-$$M = \left|\sum{i} \sigma_i \right |
-$$\chi = \frac{1}{k_B T} \left( \left<M^2\right> - \left<M\right>^2 \right)$$
-$$Vn = \left<E\right> - \frac{\left<M^n E\right>}{\left<M^n\right>}$$
+<img src="https://latex.codecogs.com/png.latex?$$\left<E\right>&space;=&space;\left<&space;\mathcal{H}&space;\right>$$" title="$$\left<E\right> = \left< \mathcal{H} \right>$$" />
+
+<img src="https://latex.codecogs.com/png.latex?$$C_{v}&space;=&space;\frac{1}{k_B&space;T^2}&space;\left(&space;\left<E^2\right>&space;-&space;\left<E\right>^2&space;\right)$$" title="$$C_{v} = \frac{1}{k_B T^2} \left( \left<E^2\right> - \left<E\right>^2 \right)$$" />
+
+<img src="https://latex.codecogs.com/png.latex?$$M&space;=&space;\left|\sum_i&space;\sigma_i&space;\right&space;|&space;$$" title="$$M = \left|\sum_i \sigma_i \right | $$" />
+
+<img src="https://latex.codecogs.com/png.latex?$$\chi&space;=&space;\frac{1}{k_B&space;T}&space;\left(&space;\left<M^2\right>&space;-&space;\left<M\right>^2&space;\right)$$" title="$$\chi = \frac{1}{k_B T} \left( \left<M^2\right> - \left<M\right>^2 \right)$$" />
+
+<img src="https://latex.codecogs.com/png.latex?$$V_{n}&space;=&space;\left<E\right>&space;-&space;\frac{\left<M^n&space;E\right>}{\left<M^n\right>}$$" title="$$V_{n} = \left<E\right> - \frac{\left<M^n E\right>}{\left<M^n\right>}$$" />
